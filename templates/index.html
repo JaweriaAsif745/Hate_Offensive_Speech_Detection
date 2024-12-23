@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Hate Speech Detector</title>
+  <link rel='stylesheet' href="{{url_for('static', filename='style.css')}}">
+  </head>
+<body>
+
+
+    
+  <div class="container">
+    <h1>Real-Time Hate Speech Detector</h1>
+    <div class="input-group">
+      <label for="messageInput">Type your message:</label>
+      <input type="text" id="messageInput" placeholder="Enter your message here...">
+    </div>
+    <div class="output" id="outputMessage"></div>
+  </div>
+
+  <script>
+    const messageInput = document.getElementById('messageInput');
+    const outputMessage = document.getElementById('outputMessage');
+
+    messageInput.addEventListener('input', async () => {
+      const text = messageInput.value;
+
+      // Check if the input is empty
+      if (!text.trim()) {
+        outputMessage.textContent = '';
+        outputMessage.className = 'output'; // Reset class
+        return;
+      }
+
+      // Send the input to the backend for analysis
+      try {
+        const response = await fetch('http://127.0.0.1:5000/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ text }),
+        });
+
+        const result = await response.json();
+
+        if (result.label) {
+          // Update the output message and style
+          outputMessage.textContent = `Prediction: ${result.label}`;
+          if (result.label === 'Neutral') {
+            outputMessage.className = 'output neutral';
+          } else if (result.label === 'Offensive') {
+            outputMessage.className = 'output offensive';
+          } else if (result.label === 'Hate') {
+            outputMessage.className = 'output hate';
+          }
+        } else if (result.error) {
+          outputMessage.textContent = `Error: ${result.error}`;
+          outputMessage.className = 'output';
+        }
+      } catch (error) {
+        outputMessage.textContent = 'Error connecting to the server!';
+        outputMessage.className = 'output';
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html>
